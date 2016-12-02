@@ -117,7 +117,7 @@ func (this *DHTServer) recvMsg(address *net.UDPAddr, msg interface{}) error {
 }
 
 func (this *DHTServer) FindNode(addr *net.UDPAddr, target string) error {
-    reqMsg := map[string]interface{} {"id":this.ID, "target": target}
+    reqMsg := map[string]interface{} {"id":target, "target": target}
     this.sendMsg(addr, "", "q", "find_node", reqMsg)
     return nil
 }
