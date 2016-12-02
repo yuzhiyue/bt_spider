@@ -69,7 +69,6 @@ func (this *DHTServer) sendMsg(address *net.UDPAddr, t string, y string, q strin
     transData.Data = krcpMsg
     transData.Timeout = 30
     this.transMap[t] = transData
-    fmt.Println("send krpc msg", krcpMsg)
     data, err := bencode.EncodeBytes(krcpMsg)
     if err != nil {
         return err
