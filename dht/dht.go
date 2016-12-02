@@ -145,7 +145,7 @@ func (this * DHTServer) onFindNodeResponse(addr *net.UDPAddr, msg map[string]int
         binary.Read(reader, binary.BigEndian, &id)
         binary.Read(reader, binary.BigEndian, &ip)
         binary.Read(reader, binary.BigEndian, &port)
-        fmt.Println("new node:", string(id[:]), inet_ntoa(ip), port)
+        fmt.Println("new node:", len(id), id, inet_ntoa(ip), port)
     }
 }
 
