@@ -21,5 +21,7 @@ func main() {
 		return
 	}
 	s.FindNode(addr, s.ID)
+	s.FindNode(addr, s.ID)
+	s.FindNode(addr, s.ID)
 	s.Run()
 }
