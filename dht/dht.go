@@ -18,7 +18,7 @@ type DHTNode struct{
 
 type Trans struct {
     Data map[string]interface{}
-    Timeout uint32
+    Timeout int64
 }
 
 type DHTServer struct{
@@ -66,13 +66,12 @@ func (this *DHTServer) sendMsg(address *net.UDPAddr, t string, y string, q strin
 
     transData := new(Trans)
     transData.Data = krcpMsg
-    transData.Timeout = 30
+    transData.Timeout = time.Now().Unix() + 10
     this.transMap[t] = transData
     data, err := bencode.EncodeBytes(krcpMsg)
     if err != nil {
         return err
     }
-    fmt.Println(data)
     _, err = this.Conn.WriteToUDP(data, address)
     return err
 }
@@ -170,7 +169,7 @@ func (this *DHTServer) onPing(addr *net.UDPAddr, t string, msg map[string]interf
 }
 
 func (this *DHTServer) sendFinNode()  {
-    for i := 0; i < 10; i++ {
+    for i := 0; i < 100; i++ {
         if this.NodeList.Len() > 0 {
             e := this.NodeList.Front()
             node := e.Value.(DHTNode)
@@ -182,12 +181,26 @@ func (this *DHTServer) sendFinNode()  {
     }
 }
 
+func (this *DHTServer) update() {
+    this.sendFinNode()
+    now := time.Now().Unix()
+    expireTrans := make([]string, 0)
+    for k, v := range this.transMap {
+        if v.Timeout <= now {
+            expireTrans = append(expireTrans, k)
+        }
+    }
+    for _, k := range expireTrans {
+        delete(this.transMap, k)
+    }
+}
+
 func (this *DHTServer) Run() {
     defer this.Conn.Close()
     var Buff [65535]byte;
     for {
-        this.sendFinNode()
-        this.Conn.SetReadDeadline(time.Now().Add(10 * time.Microsecond))
+        this.update()
+        this.Conn.SetReadDeadline(time.Now().Add(1 * time.Second))
         rlen, remote, err := this.Conn.ReadFromUDP(Buff[:])
         if err == nil {
             var msg map[string]interface{}
