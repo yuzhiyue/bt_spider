@@ -7,6 +7,8 @@ import (
     "strconv"
     "bytes"
     "encoding/binary"
+    "container/list"
+    "time"
 )
 
 type DHTNode struct{
@@ -26,10 +28,12 @@ type DHTServer struct{
     Port uint16;
     transMap map[string]*Trans
     currTransID uint32
+    NodeList *list.List
 }
 
 func (this *DHTServer) Init() error {
     this.transMap = make(map[string]*Trans);
+    this.NodeList = list.New()
     addr, err := net.ResolveUDPAddr("udp", ":" + strconv.Itoa(int(this.Port)))
     if err != nil {
         fmt.Println("net.ResolveUDPAddr fail.", err)
@@ -84,7 +88,7 @@ func (this *DHTServer) recvMsg(address *net.UDPAddr, msg interface{}) error {
         q := krcpMsg["q"].(string)
         a := krcpMsg["a"].(map[string]interface{})
         if q == "ping" {
-
+            this.onPing(address, t, a)
         } else if q == "find_node" {
             this.onFindNodeRequest(address, t, a)
         } else if q == "get_peers" {
@@ -112,7 +116,7 @@ func (this *DHTServer) recvMsg(address *net.UDPAddr, msg interface{}) error {
 }
 
 func (this *DHTServer) FindNode(addr *net.UDPAddr, target string) error {
-    reqMsg := map[string]interface{} {"id":this.ID, "target": this.ID}
+    reqMsg := map[string]interface{} {"id":this.ID, "target": target}
     this.sendMsg(addr, "", "q", "find_node", reqMsg)
     return nil
 }
@@ -122,15 +126,6 @@ func (this *DHTServer) onFindNodeRequest(addr *net.UDPAddr, t string, msg map[st
     this.sendMsg(addr, t, "r", "", rspMsg)
 }
 
-func inet_ntoa(ipnr uint32) string {
-    var bytes [4]byte
-    bytes[0] = byte(ipnr & 0xFF)
-    bytes[1] = byte((ipnr >> 8) & 0xFF)
-    bytes[2] = byte((ipnr >> 16) & 0xFF)
-    bytes[3] = byte((ipnr >> 24) & 0xFF)
-
-    return net.IPv4(bytes[3],bytes[2],bytes[1],bytes[0]).String()
-}
 
 func (this * DHTServer) onFindNodeResponse(addr *net.UDPAddr, msg map[string]interface{})  {
     nodes := []byte(msg["nodes"].(string))
@@ -145,7 +140,41 @@ func (this * DHTServer) onFindNodeResponse(addr *net.UDPAddr, msg map[string]int
         binary.Read(reader, binary.BigEndian, &id)
         binary.Read(reader, binary.BigEndian, &ip)
         binary.Read(reader, binary.BigEndian, &port)
-        fmt.Println("new node:", len(id), id, inet_ntoa(ip), port)
+
+        addr, err := net.ResolveUDPAddr("udp", inet_ntoa(ip)+":"+ strconv.Itoa(int(port)))
+        if err == nil {
+            newNode := DHTNode{string(id), addr}
+            fmt.Println("new node:", newNode)
+            this.NodeList.PushBack(newNode)
+        }
+    }
+}
+
+func (this *DHTServer) onGetPeers(addr *net.UDPAddr, t string, msg map[string]interface{})  {
+    rspMsg := map[string]interface{} {"id":this.ID, "token":"abcdefg", "nodes":""}
+    this.sendMsg(addr, t, "r", "", rspMsg)
+}
+
+func (this *DHTServer) onAnnouncePeer(addr *net.UDPAddr, t string, msg map[string]interface{})  {
+    infoHash := msg["info_hash"].(string)
+    fmt.Println("announce perr", infoHash)
+    rspMsg := map[string]interface{} {"id":this.ID}
+    this.sendMsg(addr, t, "r", "", rspMsg)
+}
+
+func (this *DHTServer) onPing(addr *net.UDPAddr, t string, msg map[string]interface{})  {
+    fmt.Println("on ping", msg["id"].(string))
+    rspMsg := map[string]interface{} {"id":this.ID}
+    this.sendMsg(addr, t, "r", "", rspMsg)
+}
+
+func (this *DHTServer) sendFinNode()  {
+    for i := 0; i < 10; i++ {
+        if this.NodeList.Len() > 0 {
+            e := this.NodeList.Front()
+            node := e.Value.(DHTNode)
+            this.FindNode(node.Address, this.ID)
+        }
     }
 }
 
@@ -153,15 +182,27 @@ func (this *DHTServer) Run() {
     defer this.Conn.Close()
     var Buff [65535]byte;
     for {
+        this.sendFinNode()
+        this.Conn.SetReadDeadline(time.Now().Add(10 * time.Microsecond))
         rlen, remote, err := this.Conn.ReadFromUDP(Buff[:])
         if err == nil {
             var msg map[string]interface{}
             bencode.DecodeBytes(Buff[:rlen], &msg)
-            fmt.Println("recv krpc msg", msg)
+            //fmt.Println("recv krpc msg", msg)
             this.recvMsg(remote, msg)
 
         }
     }
+}
+
+func inet_ntoa(ipnr uint32) string {
+    var bytes [4]byte
+    bytes[0] = byte(ipnr & 0xFF)
+    bytes[1] = byte((ipnr >> 8) & 0xFF)
+    bytes[2] = byte((ipnr >> 16) & 0xFF)
+    bytes[3] = byte((ipnr >> 24) & 0xFF)
+
+    return net.IPv4(bytes[3],bytes[2],bytes[1],bytes[0]).String()
 }
 
 
