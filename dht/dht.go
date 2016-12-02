@@ -173,6 +173,7 @@ func (this *DHTServer) sendFinNode()  {
             e := this.NodeList.Front()
             node := e.Value.(DHTNode)
             this.FindNode(node.Address, this.ID)
+            this.NodeList.Remove(e)
         }
     }
 }
