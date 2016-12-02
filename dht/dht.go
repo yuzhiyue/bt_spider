@@ -176,7 +176,7 @@ func (this *DHTServer) sendFinNode()  {
         if this.NodeList.Len() > 0 {
             e := this.NodeList.Front()
             node := e.Value.(DHTNode)
-            this.FindNode(node.Address, this.ID)
+            this.FindNode(node.Address, node.ID)
             this.NodeList.Remove(e)
         } else {
             break
