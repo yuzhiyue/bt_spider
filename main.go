@@ -17,7 +17,7 @@ func main() {
 	fmt.Println(ip)
 	addr, err := net.ResolveUDPAddr("udp", ip+":6881")
 	if err != nil {
-		fmt.Println("net.ResolveUDPAddr fail.", err)
+		fmt.Println("resolve node address fail.", err)
 		return
 	}
 	s.FindNode(addr, s.ID)

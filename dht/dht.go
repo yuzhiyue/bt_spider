@@ -30,13 +30,13 @@ type DHTServer struct{
 
 func (this *DHTServer) Init() error {
     this.transMap = make(map[string]*Trans);
-    addr, err := net.ResolveUDPAddr("udp", this.IP + ":" + string(this.Port))
+    addr, err := net.ResolveUDPAddr("udp", ":" + strconv.Itoa(int(this.Port)))
     if err != nil {
         fmt.Println("net.ResolveUDPAddr fail.", err)
         return err
     }
 
-    this.Conn, err = net.DialUDP("udp", nil, addr)
+    this.Conn, err = net.ListenUDP("udp", addr)
     if err != nil {
         fmt.Println("net.DialUDP fail.", err)
         return err
