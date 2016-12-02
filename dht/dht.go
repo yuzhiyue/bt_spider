@@ -96,7 +96,7 @@ func (this *DHTServer) recvMsg(address *net.UDPAddr, msg interface{}) error {
     } else if y == "r" {
         tranData, ok := this.transMap[t]
         if !ok {
-            return;
+            return nil;
         }
         delete(this.transMap, t)
         reqMsg := tranData.Data
