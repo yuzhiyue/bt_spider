@@ -158,6 +158,7 @@ func (this *DHTServer) Run() {
             var msg interface{}
             bencode.DecodeBytes(Buff[:rlen], msg)
             this.recvMsg(remote, msg)
+            fmt.Println("recv krpc msg", msg)
         }
     }
 }
