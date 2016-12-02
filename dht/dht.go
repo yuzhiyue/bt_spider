@@ -94,7 +94,10 @@ func (this *DHTServer) recvMsg(address *net.UDPAddr, msg interface{}) error {
             this.onAnnouncePeer(address, t, a)
         }
     } else if y == "r" {
-        tranData := this.transMap[t]
+        tranData, ok := this.transMap[t]
+        if !ok {
+            return;
+        }
         delete(this.transMap, t)
         reqMsg := tranData.Data
         q := reqMsg["q"].(string)
