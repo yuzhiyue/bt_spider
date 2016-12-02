@@ -150,6 +150,8 @@ func (this * DHTServer) onFindNodeResponse(addr *net.UDPAddr, msg map[string]int
 }
 
 func (this *DHTServer) onGetPeers(addr *net.UDPAddr, t string, msg map[string]interface{})  {
+    infoHash := msg["info_hash"].(string)
+    fmt.Println("get peer", infoHash)
     rspMsg := map[string]interface{} {"id":this.ID, "token":"abcdefg", "nodes":""}
     this.sendMsg(addr, t, "r", "", rspMsg)
 }
