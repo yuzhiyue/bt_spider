@@ -49,7 +49,6 @@ func (this *DHTServer) Init() error {
 }
 
 func (this *DHTServer) sendMsg(address *net.UDPAddr, t string, y string, q string, msg interface{}) error {
-    fmt.Println("send  msg", msg)
     if t == "" {
         t = strconv.FormatInt(int64(this.currTransID), 16)
         this.currTransID++
@@ -97,6 +96,7 @@ func (this *DHTServer) recvMsg(address *net.UDPAddr, msg interface{}) error {
         }
     } else if y == "r" {
         tranData := this.transMap[t]
+        delete(this.transMap, t)
         reqMsg := tranData.Data
         q := reqMsg["q"].(string)
         r := krcpMsg["r"].(map[string]interface{})
@@ -156,7 +156,7 @@ func (this *DHTServer) onGetPeers(addr *net.UDPAddr, t string, msg map[string]in
 
 func (this *DHTServer) onAnnouncePeer(addr *net.UDPAddr, t string, msg map[string]interface{})  {
     infoHash := msg["info_hash"].(string)
-    fmt.Println("announce perr", infoHash)
+    fmt.Println("announce peer", infoHash)
     rspMsg := map[string]interface{} {"id":this.ID}
     this.sendMsg(addr, t, "r", "", rspMsg)
 }
@@ -174,6 +174,8 @@ func (this *DHTServer) sendFinNode()  {
             node := e.Value.(DHTNode)
             this.FindNode(node.Address, this.ID)
             this.NodeList.Remove(e)
+        } else {
+            break
         }
     }
 }
