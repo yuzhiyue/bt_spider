@@ -155,10 +155,11 @@ func (this *DHTServer) Run() {
     for {
         rlen, remote, err := this.Conn.ReadFromUDP(Buff[:])
         if err == nil {
-            var msg interface{}
-            bencode.DecodeBytes(Buff[:rlen], msg)
-            this.recvMsg(remote, msg)
+            var msg map[string]interface{}
+            bencode.DecodeBytes(Buff[:rlen], &msg)
             fmt.Println("recv krpc msg", msg)
+            this.recvMsg(remote, msg)
+
         }
     }
 }
