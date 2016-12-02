@@ -13,7 +13,7 @@ import (
 
 type DHTNode struct{
     ID string
-    Address net.UDPAddr
+    Address *net.UDPAddr
 }
 
 type Trans struct {
@@ -92,9 +92,9 @@ func (this *DHTServer) recvMsg(address *net.UDPAddr, msg interface{}) error {
         } else if q == "find_node" {
             this.onFindNodeRequest(address, t, a)
         } else if q == "get_peers" {
-
+            this.onGetPeers(address, t, a)
         } else if q == "announce_peer" {
-
+            this.onAnnouncePeer(address, t, a)
         }
     } else if y == "r" {
         tranData := this.transMap[t]
@@ -143,7 +143,7 @@ func (this * DHTServer) onFindNodeResponse(addr *net.UDPAddr, msg map[string]int
 
         addr, err := net.ResolveUDPAddr("udp", inet_ntoa(ip)+":"+ strconv.Itoa(int(port)))
         if err == nil {
-            newNode := DHTNode{string(id), addr}
+            newNode := DHTNode{string(id[:]), addr}
             fmt.Println("new node:", newNode)
             this.NodeList.PushBack(newNode)
         }
