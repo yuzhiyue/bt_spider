@@ -45,11 +45,12 @@ func (this *DHTServer) Init() error {
 }
 
 func (this *DHTServer) sendMsg(address *net.UDPAddr, t string, y string, q string, msg interface{}) error {
+    fmt.Println("send  msg", msg)
     if t == "" {
         t = strconv.FormatInt(int64(this.currTransID), 16)
         this.currTransID++
     }
-    krcpMsg := msg.(map[string]interface{})
+    krcpMsg := make(map[string]interface{})
     krcpMsg["t"] = t
     krcpMsg["y"] = y
 
@@ -64,6 +65,7 @@ func (this *DHTServer) sendMsg(address *net.UDPAddr, t string, y string, q strin
     transData.Data = krcpMsg
     transData.Timeout = 30
     this.transMap[t] = transData
+    fmt.Println("send krpc msg", krcpMsg)
     data, err := bencode.EncodeBytes(krcpMsg)
     if err != nil {
         return err
@@ -111,7 +113,7 @@ func (this *DHTServer) recvMsg(address *net.UDPAddr, msg interface{}) error {
 
 func (this *DHTServer) FindNode(addr *net.UDPAddr, target string) error {
     reqMsg := map[string]interface{} {"id":this.ID, "target": this.ID}
-    this.sendMsg(addr, "", "y", "find_node", reqMsg)
+    this.sendMsg(addr, "", "q", "find_node", reqMsg)
     return nil
 }
 
